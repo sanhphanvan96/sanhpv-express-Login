@@ -1,0 +1,48 @@
+{
+  "name": "pilot-project-1",
+  "version": "0.0.1",
+  "description": "\"Pilot Project 1\"",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "webpack:watch": "webpack --debug --watch --devtool=eval",
+    "start": "DEBUG=DemoApp babel-node src/server/index.js"
+  },
+  "author": "lamnh-sanhpv",
+  "license": "ISC",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-react": "^6.24.1",
+    "webpack": "^3.8.1"
+  },
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "compression": "^1.7.1",
+    "cookie-parser": "^1.4.3",
+    "csurf": "^1.9.0",
+    "debug": "^3.1.0",
+    "express": "^4.16.2",
+    "express-minify": "^1.0.0",
+    "express-session": "^1.15.6",
+    "helmet": "^3.9.0",
+    "lodash": "^4.17.4",
+    "mongoose": "^4.13.5",
+    "morgan": "^1.9.0",
+    "nunjucks": "^3.0.1",
+    "passport": "^0.4.0",
+    "passport-local": "^1.0.0",
+    "password-hash": "^1.2.2",
+    "prop-types": "^15.6.0",
+    "react": "^16.2.0",
+    "react-dom": "^16.2.0",
+    "react-redux": "^5.0.6",
+    "react-router-config": "^1.0.0-beta.4",
+    "react-router-dom": "^4.2.2",
+    "redux": "^3.7.2",
+    "redux-thunk": "^2.2.0"
+  }
+}
