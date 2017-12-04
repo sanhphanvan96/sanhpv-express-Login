@@ -4,9 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>{{title}}</title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 </head>
 <body>
-    <div id="root"></div>
-    <script type="text/javascript" src="/static/bundle.js"></script>
+<div role="navigation" class="navbar navbar-inverse navbar-static-top">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" data-toggle="collapse" data-target=".navbar-collapse" class="navbar-toggle"><span
+                    class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span
+                    class="icon-bar"></span></button>
+            <a href="/" class="navbar-brand">Demo App</a>
+        </div>
+        <div class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+                <li class="active"><a href="/">Home</a></li>
+                {% if user %}
+                <li><a href="">{{user.emails.address}}</a></li>
+                {% else %}
+                <li><a href="/account/login">Login</a></li>
+                <li><a href="/account/signup">Signup</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="container">
+    {% if messages.error %}
+    <div class="alert alert-danger">{{messages.error}}</div>
+    {% endif %}
+    {% if messages.info %}
+    <div class="alert alert-info">{{messages.info}}</div>
+    {% endif %}
+    {% if messages.success %}
+    <div class="alert alert-success">{{messages.success}}</div>
+    {% endif %}
+    {% block content %}
+    {% endblock %}
+</div>
 </body>
 </html>
