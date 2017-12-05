@@ -5,3 +5,5 @@ bower_components
 public/bundle.js
 public/lib
 yarn-error.log
+.jscsrc
+.jshintrc
