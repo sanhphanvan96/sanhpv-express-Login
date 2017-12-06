@@ -1,0 +1,11 @@
+{% set title = 'Verify Phone Number' %}
+{% import "form.html" as form %}
+{% extends 'index.html' %}
+{% block content %}
+{% if not user.emails.isVerified %}
+<form action="/verify/email" method="post">
+    <input type="hidden" name="_csrf" value="{{csrfToken}}">
+    <button type="submit" class="btn btn-primary">Resend Email</button>
+</form>
+{% endif %}
+{% endblock %}
