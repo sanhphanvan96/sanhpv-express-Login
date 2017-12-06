@@ -16,7 +16,6 @@ export async function verifyAuthToken(access_token) {
         if(accessToken) {
             return getCurrentUser(accessToken.userId);
         }
-        throw new Error("NOT_FOUND_TOKEN");
     } catch (e) {
         throw e;
     }

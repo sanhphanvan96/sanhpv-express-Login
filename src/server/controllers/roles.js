@@ -17,3 +17,11 @@ export async function countRoles () {
         throw e;
     }
 }
+
+export async function getRolesByName(name) {
+    try {
+        return await Roles.find({roleName: name}).exec();
+    } catch(e) {
+        throw e;
+    }
+}

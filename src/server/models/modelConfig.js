@@ -46,6 +46,8 @@ const User = createModel("users", new Schema({
         type: Array
     },
     createdAt: {type: String, default: new Date().toISOString()},
+    phoneNumberVerifiedCode: {type: String},
+    phoneNumberCodeExpires: {type: Date},
     resetPasswordToken: {type: String},
     resetPasswordExpires: {type: Date},
     emailVerificationToken: {type: String},

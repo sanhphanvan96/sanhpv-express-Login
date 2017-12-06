@@ -2,7 +2,7 @@
 {% import "form.html" as form %}
 {% extends 'index.html' %}
 {% block content %}
-<form action="/login" method="post">
+<form action="/account/login" method="post">
     <div class="form-group">
         {{ form.label( 'Email', forName="username" ) }}
         {{ form.field( 'username', type='email', required="true") }}

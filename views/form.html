@@ -1,5 +1,7 @@
-{% macro field( name, value = '', type = 'text', required = "false" ) %}
-<input class="form-control" type="{{ type }}" name="{{ name }}" value="{{ value | escape }}" required="{{required}}" />
+{% macro field( name, value = '', type = 'text', required = "false", placeholder ) %}
+<input class="form-control" type="{{ type }}" name="{{ name }}"
+       placeholder="{{placeholder}}"
+       value="{{ value | escape }}" required="{{required}}" />
 {% endmacro %}
 
 {% macro label( text, forName ) %}
