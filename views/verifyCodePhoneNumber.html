@@ -9,11 +9,11 @@
     </div>
     <input type="hidden" name="_csrf" value="{{csrfToken}}">
     <div class="row">
-        <div class="col-sm-3 text-center">
+        <div class="col-sm-1 text-center">
             <button type="submit" formaction="/verify/phoneNumber/code" class="btn btn-primary">Submit</button>
         </div>
-        <div class="col-sm-3 text-center">
-            <button type="submit" formaction="/verify/phoneNumber/resendCode" class="btn btn-primary">Resend Code</button>
+        <div class="col-sm-1 text-center">
+            <button type="submit" formaction="/verify/phoneNumber/resendCode" class="btn btn-primary" formnovalidate>Resend Code</button>
         </div>
     </div>
 </form>

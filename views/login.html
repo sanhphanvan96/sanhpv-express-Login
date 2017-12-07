@@ -12,6 +12,13 @@
         {{ form.field( 'password', type='password', required="true") }}
     </div>
     <input type="hidden" name="_csrf" value="{{csrfToken}}">
-    <button type="submit" class="btn btn-primary">Login</button>
+    <div class="row">
+        <div class="col-sm-1">
+            <button type="submit" class="btn btn-primary">Login</button>
+        </div>
+        <div class="col-sm-2">
+            <a href="/account/forgot">Forgot password ?</a>
+        </div>
+    </div>
 </form>
 {% endblock %}

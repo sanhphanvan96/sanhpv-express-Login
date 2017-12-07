@@ -6,17 +6,10 @@ const config = {
 };
 
 export function sendSMS(to, message) {
-    return new Promise((resolve, reject) => {
-        const client = twilio(config.accountSid, config.authToken);
-        return client.api.messages.create({
-            body: message,
-            to,
-            from: "+12165928648" // Twilio Phone Number
-        }, function(err, msg) {
-            if(err) reject(err);
-            else {
-                resolve(msg);
-            }
-        })
+    const client = twilio(config.accountSid, config.authToken);
+    return client.api.messages.create({
+        to,
+        from: "+12165928648 ", // Twilio Phone Number
+        body: message,
     })
 }

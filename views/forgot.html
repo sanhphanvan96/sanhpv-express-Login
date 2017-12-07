@@ -1,0 +1,13 @@
+{% set title = 'Sign Up' %}
+{% import "form.html" as form %}
+{% extends 'index.html' %}
+{% block content %}
+<form action="/account/forgot" method="post">
+    <div class="form-group">
+        {{ form.label( 'Email', forName="email" ) }}
+        {{ form.field( 'email', type='email', required="true") }}
+    </div>
+    <input type="hidden" name="_csrf" value="{{csrfToken}}">
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+{% endblock %}
