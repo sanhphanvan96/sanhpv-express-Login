@@ -1,4 +1,5 @@
 import {Roles} from "../models/modelConfig";
+import debug from "debug";
 
 export async function createRole (roleName) {
     try {
@@ -20,7 +21,8 @@ export async function countRoles () {
 
 export async function getRolesByName(name) {
     try {
-        return await Roles.find({roleName: name}).exec();
+        debug("DemoApp")("Roles Name: " + name);
+        return await Roles.findOne({roleName: name}).exec();
     } catch(e) {
         throw e;
     }

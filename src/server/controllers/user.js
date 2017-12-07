@@ -14,11 +14,22 @@ export async function sendEmail() {
     
 }
 
-export async function createUser(user, role) {
+export async function createUser(user, roleName) {
     try {
-        let role = await getRolesByName(role);
-        Object.assign(role, {roles: role._id});
-        return await new User(user).save();
+        let role = await getRolesByName(roleName);
+        if(role) {
+            Object.assign(user, {roles: [role._id.toString()]});
+            return await new User(user).save();
+        }
+        throw new Error("ROLE_NOT_FOUND");
+    } catch(e) {
+        throw e;
+    }
+}
+
+export function updateUser(criteria, modifier, option) {
+    try {
+        return User.update(criteria, modifier, option).exec();
     } catch(e) {
         throw e;
     }

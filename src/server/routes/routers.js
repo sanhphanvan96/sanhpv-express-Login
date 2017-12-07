@@ -3,6 +3,7 @@ import account from "./account";
 import verify from "./verification";
 import {verifyAuthToken} from "../controllers/accessToken";
 import debug from "debug";
+import profile from "./profile";
 
 const router = express.Router();
 
@@ -29,6 +30,10 @@ router.use('/account', account);
 router.use("/verify", checkAuth());
 
 router.use('/verify', verify);
+
+router.use("/profile", checkAuth());
+
+router.use("/profile", profile);
 
 router.all("/", checkAuth());
 
