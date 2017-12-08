@@ -2,7 +2,7 @@ import passport from "passport";
 import express from "express";
 import passwordHash from "password-hash";
 import {Strategy as LocalStrategy} from "passport-local"
-import {createAuthToken} from "../controllers/accessToken";
+import {createAuthToken, removeToken} from "../controllers/accessToken";
 import {createUser, findOneUser, updateUser} from "../controllers/user";
 import * as _ from "lodash";
 import CryptoJS from "crypto-js";
@@ -209,6 +209,37 @@ account.route('/resetPassword')
                 req.flash("error", "Password is required");
             }
             res.redirect(`/account/resetPassword?verifyToken=${req.query.verifyToken}`);
+        } catch (e) {
+            next(e);
+        }
+    });
+
+account.route("/changePassword")
+    .get((req, res, next) => {
+        res.render("changePassword.html", {csrfToken: req.csrfToken(), user: req.user});
+    })
+    .post( async (req, res, next) => {
+        try {
+            let [oldPassword, newPassword, rePassword] = [req.body["old-password"], req.body['new-password'], req.body['re-password']];
+            let currentUser = await findOneUser({_id: req.user._id}),
+                verifyPassword = passwordHash.verify(oldPassword, currentUser.password);
+            if(verifyPassword) {
+                if(newPassword === rePassword) {
+                    await updateUser({_id: req.user._id}, {$set: {
+                        password: passwordHash.generate(newPassword)
+                    }});
+                    await removeToken(req.user._id);
+                    res.clearCookie("authToken");
+                    delete req.user;
+                    req.flash("success", "Password changed. Please Login");
+                    res.redirect("/account/login");
+                } else {
+                    req.flash("error", "New password is not matched");
+                }
+            } else {
+                req.flash("error", "Password incorrect");
+            }
+            res.redirect("/account/changePassword");
         } catch (e) {
             next(e);
         }

@@ -1,56 +1,33 @@
-{% set title = 'Login' %}
+{% set title = 'Profile' %}
 {% import "form.html" as form %}
 {% extends 'index.html' %}
 {% block content %}
 <div class="card card-shadow-3">
     <div class="profile-image-wrapper">
-        <img class="profile-image" src="https://via.placeholder.com/150x150" alt="placeholder">
-    </div>
-    <div class="text-center">
-        <h3>INFORMATION</h3>
-    </div>
-    <div class="row text-center">
-        <div class=" col-md-9 col-lg-12 ">
-            <table class="table table-user-information">
-                <tbody>
-                <tr>
-                    <td>Department:</td>
-                    <td>Programming</td>
-                </tr>
-                <tr>
-                    <td>Hire date:</td>
-                    <td>06/23/2013</td>
-                </tr>
-                <tr>
-                    <td>Date of Birth</td>
-                    <td>01/24/1988</td>
-                </tr>
-
-                <tr>
-                </tr><tr>
-                    <td>Gender</td>
-                    <td>Female</td>
-                </tr>
-                <tr>
-                    <td>Home Address</td>
-                    <td>Kathmandu,Nepal</td>
-                </tr>
-                <tr>
-                    <td>Email</td>
-                    <td><a href="mailto:info@support.com">info@support.com</a></td>
-                </tr>
-                <tr><td>Phone Number</td>
-                    <td>123-4567-890(Landline)<br><br>555-4567-890(Mobile)
-                    </td>
-
-                </tr>
-
-                </tbody>
-            </table>
-
-            <a href="#" class="btn btn-primary">My Sales Performance</a>
-            <a href="#" class="btn btn-primary">Team Sales Performance</a>
+        <div class="profile-image">
+            <img style="width: 100%; height: 100%" src="https://via.placeholder.com/150x150" alt="placeholder">
+            <div class="overlay"></div>
+            <div class="icon-camera"><span><i class="fa fa-camera" aria-hidden="true"></i></span></div>
+            <input type="file" id="image-file" accept="image/*">
         </div>
     </div>
+    <h2>INFORMATION</h2>
+    <form>
+        <div class="form-group">
+            <label>Email</label>
+            <input class="form-control" disabled type="email" name="email" value="{{user.emails.address}}">
+        </div>
+        <div class="form-group">
+            <label>Name</label>
+            <input class="form-control" type="text" name="name" value="{{user.profile.name}}">
+        </div>
+        <input type="hidden" name="_csrf" value="{{csrfToken}}">
+        <input type="submit" value="Update" formaction="/account/update/profile" formmethod="post" class="btn btn-primary left"/>
+        <a href="/account/changePassword" class="btn btn-primary right">Change Password</a>
+        <div class="clearfix"></div>
+    </form>
 </div>
+
+<script>
+</script>
 {% endblock %}
