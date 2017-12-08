@@ -2,6 +2,7 @@ import express from "express";
 import {findOneUser} from "../controllers/user";
 import {User} from "../models/modelConfig";
 import nodemailerMG from "../utils/nodemailer";
+import {sendSMS} from "../utils/smsSender";
 
 const verify = express.Router();
 
@@ -140,7 +141,7 @@ verify.route("/phoneNumber")
                         phoneNumberCodeExpires
                     }
                 });
-                //let result = await sendSMS(phoneNumber, `Your verified code is: ${phoneNumberVerifiedCode}`); // This only for +1 code area number
+                let result = await sendSMS(phoneNumber, `Your verified code is: ${phoneNumberVerifiedCode}`); // This only for +1 code area number
                 req.flash("info", "An SMS has been sent to your phone number");
                 res.render("verifyCodePhoneNumber.html", {csrfToken: req.csrfToken(), user: req.user});
             }
@@ -204,7 +205,7 @@ verify.route("/phoneNumber/resendCode")
                             phoneNumberCodeExpires
                         }
                     });
-                    //let result = await sendSMS(phoneNumber.number, `Your verified code is: ${phoneNumberVerifiedCode}`); // This only for +1 code area number
+                    let result = await sendSMS(phoneNumber.number, `Your verified code is: ${phoneNumberVerifiedCode}`); // This only for +1 code area number
                     req.flash("info", "An SMS has been sent to your phone number");
                     res.redirect("/verify/phoneNumber")
                 } else {

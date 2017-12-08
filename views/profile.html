@@ -8,6 +8,7 @@
             <img style="width: 100%; height: 100%" src="https://via.placeholder.com/150x150" alt="placeholder">
             <div class="overlay"></div>
             <div class="icon-camera"><span><i class="fa fa-camera" aria-hidden="true"></i></span></div>
+            <input type="file" id="image-file" accept="image/*">
         </div>
     </div>
     <h2>INFORMATION</h2>
@@ -20,8 +21,13 @@
             <label>Name</label>
             <input class="form-control" type="text" name="name" value="{{user.profile.name}}">
         </div>
-        <input type="submit" value="Update" class="btn btn-primary left"/>
+        <input type="hidden" name="_csrf" value="{{csrfToken}}">
+        <input type="submit" value="Update" formaction="/account/update/profile" formmethod="post" class="btn btn-primary left"/>
+        <a href="/account/changePassword" class="btn btn-primary right">Change Password</a>
         <div class="clearfix"></div>
     </form>
 </div>
+
+<script>
+</script>
 {% endblock %}

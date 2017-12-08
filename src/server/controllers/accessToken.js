@@ -20,3 +20,11 @@ export async function verifyAuthToken(access_token) {
         throw e;
     }
 }
+
+export async function removeToken (userId) {
+    try {
+        return await AccessToken.remove({userId}).exec();
+    } catch(e) {
+        throw e;
+    }
+}
