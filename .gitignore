@@ -7,3 +7,4 @@ public/lib
 yarn-error.log
 .jscsrc
 .jshintrc
+.eslintrc.js

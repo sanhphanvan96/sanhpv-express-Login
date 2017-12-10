@@ -244,5 +244,21 @@ account.route("/changePassword")
             next(e);
         }
     });
-
+account.route("/update/profile")
+    .post( async (req, res, next) => {
+        try {
+            let newName = req.body["name"];
+            let currentUser = await findOneUser({_id: req.user._id});
+            if(newName) {
+                await updateUser({_id: req.user._id}, {$set: {"profile.name": newName}});
+                req.flash("success", "Name was updated successfully");
+                res.redirect("/profile");
+            } else {
+                req.flash("error", "Name can't be blank");
+            }
+            
+        } catch (e) {
+            next(e``);
+        }
+    });
 export default account;
