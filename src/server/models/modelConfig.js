@@ -30,7 +30,7 @@ const User = createModel("users", new Schema({
             type: String,
             validate: {
                 validator: (v) => {
-                    return (new RegExp(/^\+?\d{1,3}?[- .]?\(?(?:\d{2,3})\)?[- .]?\d\d\d[- .]?\d\d\d\d$/)).test(v);
+                    return (new RegExp(/^\+\d{1,3}?[- .]?\(?(?:\d{2,3})\)?[- .]?\d\d\d[- .]?\d\d\d\d$/)).test(v);
                 },
                 message: "{VALUE} is not a valid phone number"
             }
@@ -51,7 +51,9 @@ const User = createModel("users", new Schema({
     resetPasswordToken: {type: String},
     resetPasswordExpires: {type: Date},
     emailVerificationToken: {type: String},
-    emailVerificationExpired: {type: Date}
+    emailVerificationExpired: {type: Date},
+    phoneNumberCodeSentCount: {type:Number},
+    phoneNumberSentCountReset: {type: Date}
 }), "users");
 
 

@@ -35,7 +35,7 @@ passport.use(new LocalStrategy(async (username, password, done) => {
                 done(null, false, "Password is wrong");
             }
         } else {
-            done(null, false, "Not found email");
+            done(null, false, "Email not found");
         }
     } catch (e) {
         done(e);
@@ -139,7 +139,7 @@ account.post("/profile/update", async (req, res, next) => {
 
         await User.update({_id: req.user._id}, {$set: modifier});
         req.flash("success", "Update Successfully");
-        res.redirect("/");
+        res.redirect("/profile");
     } catch(e) {
         req.flash("error", "Cannot update profile");
         res.redirect("/profile");
@@ -219,45 +219,50 @@ account.route("/signup")
         res.render("signup.html", {csrfToken: req.csrfToken()});
     })
     .post(async (req, res, next) => {
-        let {username, password, repassword} = req.body;
-        if (username && password && repassword) {
-            if (password !== repassword) {
-                req.flash("info", "Password and RePassword was not matched");
-                res.redirect("/account/signup");
-            } else {
-                let getUserByEmail = await findOneUser({"emails.address": username});
-                if (!getUserByEmail) {
-                    let user = await createUser({
-                        emails: {
-                            address: username
-                        },
-                        password: passwordHash.generate(password),
-                        profile: {},
-                        emailVerificationToken: CryptoJS.enc.Hex.stringify(CryptoJS.lib.WordArray.random(16)),
-                        emailVerificationExpired: Date.now() + 3600000, // 1 hour
-                    }, "user"); // Create user with role
-                    user = user.toJSON();
-                    let authToken = await createAuthToken(user._id.toString());
-                    res.cookie('authToken', authToken.access_token, authOptions); // options is optional
-                    req.user = _.pick(user, ['emails', 'password', 'profile']);
-                    nodemailerMG.sendMail({
-                        from: 'demoapp@no-reply.com', // sender address
-                        to: user.emails.address, // list of receivers
-                        subject: 'Email Verification', // Subject line
-                        html: `Thanks for your registration please confirm your email: <a href="http://localhost:3000/verify/email?verifyToken=${user.emailVerificationToken}">http://localhost:3000/verify/email?verifyToken=${user.emailVerificationToken}</a>` // html body
-                    }, (error, info) => {
-                        if (error) console.log(error);
-                        else console.log(info);
-                    });
-                    req.flash("info", "An Email has been sent to your email");
-                    res.redirect('/');
+        try {
+            let {username, password, repassword} = req.body;
+            if (username && password && repassword) {
+                if (password !== repassword) {
+                    req.flash("info", "Password and RePassword was not matched");
+                    res.render("signup.html", {csrfToken: req.csrfToken(), email: username});
                 } else {
-                    req.flash("info", "Email is existed");
-                    res.redirect("/account/signup");
+                    let getUserByEmail = await findOneUser({"emails.address": username});
+                    if (!getUserByEmail) {
+                        let user = await createUser({
+                            emails: {
+                                address: username
+                            },
+                            password: passwordHash.generate(password),
+                            profile: {},
+                            emailVerificationToken: CryptoJS.enc.Hex.stringify(CryptoJS.lib.WordArray.random(16)),
+                            emailVerificationExpired: Date.now() + 3600000, // 1 hour
+                        }, "user"); // Create user with role
+                        user = user.toJSON();
+                        let authToken = await createAuthToken(user._id.toString());
+                        res.cookie('authToken', authToken.access_token, authOptions); // options is optional
+                        req.user = _.pick(user, ['emails', 'password', 'profile']);
+                        nodemailerMG.sendMail({
+                            from: 'demoapp@no-reply.com', // sender address
+                            to: user.emails.address, // list of receivers
+                            subject: 'Email Verification', // Subject line
+                            html: `Thanks for your registration please confirm your email: <a href="http://localhost:3000/verify/email?verifyToken=${user.emailVerificationToken}">http://localhost:3000/verify/email?verifyToken=${user.emailVerificationToken}</a>` // html body
+                        }, (error, info) => {
+                            if (error) console.log(error);
+                            else console.log(info);
+                        });
+                        req.flash("info", "An Email has been sent to your email");
+                        res.redirect('/');
+                    } else {
+                        req.flash("info", "Email is existed");
+                        res.redirect("/account/signup");
+                    }
                 }
+            } else {
+                req.flash("info", "You must fill all fields");
+                res.redirect("/account/signup");
             }
-        } else {
-            req.flash("info", "You must fill all fields");
+        } catch(e) {
+            req.flash("error", e.message);
             res.redirect("/account/signup");
         }
     });
@@ -279,7 +284,8 @@ account.use('/resetPassword', async (req, res, next) => {
         }
         res.redirect("/account/forgot");
     } catch (e) {
-        next(e);
+        req.flash("error", e.message);
+        res.redirect("/account/forgot");
     }
 });
 
@@ -316,7 +322,8 @@ account.route('/resetPassword')
             }
             res.redirect(`/account/resetPassword?verifyToken=${req.query.verifyToken}`);
         } catch (e) {
-            next(e);
+            req.flash("error", e.message);
+            res.redirect("forgot");
         }
     });
 

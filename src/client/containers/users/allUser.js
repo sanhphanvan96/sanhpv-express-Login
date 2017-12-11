@@ -5,7 +5,6 @@ import {fetchUser, userCount} from "../../actions/user";
 import * as _ from "lodash";
 import Loading from "../../components/loading";
 import {setBody, setFooter, setID, setTitle} from "../../actions/modal";
-import querystring from 'query-string';
 
 class AllUser extends React.Component {
     constructor(props) {
@@ -32,13 +31,13 @@ class AllUser extends React.Component {
         let users = !_.isEqual(this.state.users, nextState.users),
             userCount = !_.isEqual(this.state.userCount, nextState.userCount),
             loading = !_.isEqual(this.state.loading, nextState.loading),
-            change = !_.isEqual(this.state.changed, nextState.changed)
+            change = !_.isEqual(this.state.changed, nextState.changed);
         return users || loading || userCount || change;
     }
 
     async loadData(filter) {
-        let query = querystring.parse(this.props.location.search);
-        let isActiveNumber = (query.page != undefined && query.page > 0) ? parseInt(query.page) - 1 : 0;
+        let page = this.props.match.params.page || 1;
+        let isActiveNumber = page > 0 ? (+page) - 1 : 0;
         this.skip = isActiveNumber * this.limit;
         await fetchUser(filter, this.limit, this.skip);
         await userCount(filter);
@@ -55,6 +54,9 @@ class AllUser extends React.Component {
         this.setState({users: nextProps.users, loading: false});
         if (!_.isEqual(this.state.userCount, nextProps.userCount)) {
             this.setState({userCount: nextProps.userCount})
+        }
+        if(!_.isEqual(this.props.match, nextProps.match)) {
+
         }
     }
 

@@ -31,7 +31,7 @@ class Sidebar extends React.Component {
                                         <div id="dropdown-lvl1" className="panel-collapse collapse">
                                             <div className="panel-body">
                                                 <ul className="nav navbar-nav">
-                                                    <li><Link to="/admin/users">All</Link></li>
+                                                    <li><Link to="/admin/users/1">All</Link></li>
                                                     <li><Link to="/admin/users/create">Create</Link></li>
                                                 </ul>
                                             </div>

@@ -24,10 +24,10 @@ verify.use(async (req, res, next) => {
  */
 
 verify.use('/email', (req, res, next) => {
-   if(req.user.emails.isVerified) {
-       return res.redirect("/")
-   }
-   next();
+    if (req.user.emails.isVerified) {
+        return res.redirect("/")
+    }
+    next();
 });
 
 verify.route('/email')
@@ -85,14 +85,16 @@ verify.route('/email')
                         subject: 'Email Verification', // Subject line
                         html: `Thanks for your registration please confirm your email: <a href="http://localhost:3000/verify/email?verifyToken=${req.user.emailVerificationToken}">http://localhost:3000/verify/email?verifyToken=${req.user.emailVerificationToken}</a>` // html body
                     }, (error, info) => {
-                        if (error) console.log(error);
+                        if (error) {
+                            console.log(error);
+                            req.flash("error", "Something's wrong we cannot send you an e-mail");
+                        }
                         else {
                             console.log(info);
                             req.flash("info", "An email has been sent to your email");
-                            res.redirect("/verify/email");
                         }
+                        res.redirect("/verify/email");
                     });
-                    res.redirect("/verify/email");
                 }
             } else {
                 req.flash("info", "Please Login");
@@ -107,7 +109,7 @@ verify.route('/email')
  * Phone Number Verification
  */
 verify.use('/phoneNumber', (req, res, next) => {
-    if(req.user.phoneNumber.isVerified) {
+    if (req.user.phoneNumber.isVerified) {
         return res.redirect("/")
     }
     next();
@@ -116,7 +118,7 @@ verify.use('/phoneNumber', (req, res, next) => {
 verify.route("/phoneNumber")
     .get(async (req, res, next) => {
         try {
-            if(!req.user.phoneNumber.number) {
+            if (!req.user.phoneNumber.number) {
                 res.render("verifyPhoneNumber.html", {csrfToken: req.csrfToken(), user: req.user});
             } else {
                 res.render("verifyCodePhoneNumber.html", {csrfToken: req.csrfToken(), user: req.user});
@@ -129,34 +131,38 @@ verify.route("/phoneNumber")
         try {
             if (!req.body.phoneNumber) {
                 req.flash("info", "Phone Number cannot be empty");
-                res.redirect("/verify/phoneNumber");
             } else {
                 let {phoneNumber} = req.body;
                 let phoneNumberVerifiedCode = Math.floor(Math.random() * 90000) + 10000,
-                    phoneNumberCodeExpires = Date.now() + 3600000; // 1 hour
+                    phoneNumberCodeExpires = Date.now() + 3600000, // 1 hour
+                    phoneNumberCodeSentCount = 0,
+                    phoneNumberSentCountReset = Date.now() + 180000; // Limit time re-send verifying code
                 await User.findOneAndUpdate({_id: req.user._id}, {
                     $set: {
                         'phoneNumber.number': phoneNumber,
                         phoneNumberVerifiedCode,
-                        phoneNumberCodeExpires
+                        phoneNumberCodeExpires,
+                        phoneNumberCodeSentCount,
+                        phoneNumberSentCountReset
                     }
-                });
+                }, {runValidators: true});
                 let result = await sendSMS(phoneNumber, `Your verified code is: ${phoneNumberVerifiedCode}`); // This only for +1 code area number
                 req.flash("info", "An SMS has been sent to your phone number");
-                res.render("verifyCodePhoneNumber.html", {csrfToken: req.csrfToken(), user: req.user});
             }
+            res.redirect("phoneNumber");
         } catch (e) {
-            next(e);
+            req.flash("error", e.message);
+            res.redirect("phoneNumber");
         }
     });
 
 verify.route("/phoneNumber/code")
     .post(async (req, res, next) => {
         try {
-            if(req.body.code) {
+            if (req.body.code) {
                 let code = await User.findOne({phoneNumberVerifiedCode: req.body.code});
-                if(code) {
-                    if(Date.now() > new Date(code.phoneNumberCodeExpires).getTime()) {
+                if (code) {
+                    if (Date.now() > new Date(code.phoneNumberCodeExpires).getTime()) {
                         req.flash("error", "Code is expired");
                         return res.redirect("/verify/phoneNumber");
                     } else {
@@ -166,7 +172,9 @@ verify.route("/phoneNumber/code")
                             },
                             $unset: {
                                 phoneNumberVerifiedCode: "",
-                                phoneNumberCodeExpires: ""
+                                phoneNumberCodeExpires: "",
+                                phoneNumberCodeSentCount: "",
+                                phoneNumberSentCountReset: ""
                             }
                         }).exec();
                         req.flash("success", "Your phone number has been verified");
@@ -180,7 +188,7 @@ verify.route("/phoneNumber/code")
                 req.flash("error", "Code is required");
                 res.redirect("/verify/phoneNumber")
             }
-        } catch(e) {
+        } catch (e) {
             next(e);
         }
     });
@@ -192,22 +200,34 @@ verify.route("/phoneNumber/code")
 verify.route("/phoneNumber/resendCode")
     .post(async (req, res, next) => {
         try {
-            let { phoneNumber } = req.user;
-            if(phoneNumber != undefined) {
-                if(phoneNumber.number.length) {
+            let {phoneNumber, phoneNumberCodeSentCount, phoneNumberSentCountReset} = req.user;
+            if (phoneNumber != undefined) {
+                if (phoneNumber.number.length) {
+                    if (phoneNumberCodeSentCount >= 3 &&
+                        new Date(phoneNumberSentCountReset).getTime() > Date.now()) {
+                        req.flash("error", "You can only re-send code 3 times in 3 minutes");
+                    } else {
+                        let modifier = {
+                            $set: {
+                                phoneNumberVerifiedCode: `${Math.floor(Math.random() * 90000) + 10000}`, // Cast to String
+                                phoneNumberCodeExpires: Date.now() + 3600000 // 1 hour
+                            }
+                        };
 
-                    // Resend phoneNumber verification
-                    let phoneNumberVerifiedCode = `${Math.floor(Math.random() * 90000) + 10000}`, // Cast to String
-                        phoneNumberCodeExpires = Date.now() + 3600000; // 1 hour
-                    await User.findOneAndUpdate({_id: req.user._id}, {
-                        $set: {
-                            phoneNumberVerifiedCode,
-                            phoneNumberCodeExpires
-                        }
-                    });
-                    let result = await sendSMS(phoneNumber.number, `Your verified code is: ${phoneNumberVerifiedCode}`); // This only for +1 code area number
-                    req.flash("info", "An SMS has been sent to your phone number");
-                    res.redirect("/verify/phoneNumber")
+                        // Update Re-send code
+                        (new Date(phoneNumberSentCountReset).getTime() > Date.now())
+                            ? Object.assign(modifier, {
+                                $inc: {phoneNumberCodeSentCount: 1}
+                            }) : Object.assign(modifier["$set"], {
+                                phoneNumberCodeSentCount: 1,
+                                phoneNumberSentCountReset: Date.now() + 180000 // 3 minutes to reset re-send code count
+                            });
+
+                        await User.findOneAndUpdate({_id: req.user._id}, modifier);
+                        let result = await sendSMS(phoneNumber.number, `Your verified code is: ${phoneNumberVerifiedCode}`); // This only for +1 code area number
+                        req.flash("info", "An SMS has been sent to your phone number");
+                        return res.redirect("/verify/phoneNumber")
+                    }
                 } else {
                     req.flash("error", "Phone number is required");
                 }
@@ -215,7 +235,7 @@ verify.route("/phoneNumber/resendCode")
                 req.flash("error", "An error occurred when get phone number");
             }
             res.redirect("/verify/phoneNumber")
-        } catch(e) {
+        } catch (e) {
             next(e);
         }
     });

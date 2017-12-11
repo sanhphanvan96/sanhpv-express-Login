@@ -9,17 +9,18 @@ export default [
         component: App,
         routes: [
             {
+                component: Home,
+                exact: true,
+                path: "/admin"
+            },
+            {
                 component: CreateUser,
+                exact: true,
                 path: "/admin/users/create"
             },
             {
                 component: AllUser,
-                path: "/admin/users"
-            },
-            {
-                component: Home,
-                exact: true,
-                path: "/admin"
+                path: "/admin/users/:page"
             },
             {
                 component: NotFound,

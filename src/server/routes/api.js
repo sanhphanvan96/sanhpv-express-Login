@@ -116,7 +116,10 @@ api.post('/users/update/:id', async (req, res, next) => {
             let { email, password, name } = req.body;
             if(email) {
 
-                let userCount = await User.find({"emails.address": email}).count().exec();
+                let userCount = await User.find({
+                    _id: {$ne: req.params.id},
+                    "emails.address": email
+                }).count().exec();
                 if(userCount) {
                     req.flash("error", "Email exists");
                     return res.redirect("/admin/users");
