@@ -1,10 +1,9 @@
 import {User} from "../models/modelConfig";
 import {getRolesByName} from "./roles";
 
-export async function findOneUser(filter) {
+export async function findOneUser(filter, options) {
     try {
-        let user = await User.findOne(filter).exec();
-        return user;
+        return await User.findOne(filter, options).exec();
     } catch(e) {
         throw e;
     }

@@ -1,14 +1,20 @@
 {% set title = 'Profile' %}
+{% set hasHeader = true %}
 {% import "form.html" as form %}
 {% extends 'index.html' %}
 {% block content %}
 <div class="card card-shadow-3">
     <div class="profile-image-wrapper">
-        <div class="profile-image">
+        <div class="profile-image" onclick="onClickImage()">
+            {% if user.profile.image %}
+            <img style="width: 100%; height: 100%" src="{{user.profile.image}}" alt="placeholder">
+            {% else %}
+            <img style="width: 100%; height: 100%" src="https://via.placeholder.com/150x150" alt="placeholder">
+            {% endif %}
             <img style="width: 100%; height: 100%" src="https://via.placeholder.com/150x150" alt="placeholder">
             <div class="overlay"></div>
             <div class="icon-camera"><span><i class="fa fa-camera" aria-hidden="true"></i></span></div>
-            <input type="file" id="image-file" accept="image/*">
+            <input type="file" id="image-file" accept="image/*" onchange="onChangeImage()">
         </div>
     </div>
     <h2>INFORMATION</h2>
@@ -21,13 +27,160 @@
             <label>Name</label>
             <input class="form-control" type="text" name="name" value="{{user.profile.name}}">
         </div>
+        <input type="hidden" name="avatarUrl">
         <input type="hidden" name="_csrf" value="{{csrfToken}}">
-        <input type="submit" value="Update" formaction="/account/update/profile" formmethod="post" class="btn btn-primary left"/>
+        <input type="submit" value="Update" formaction="/account/profile/update" formmethod="post" class="btn btn-primary left"/>
         <a href="/account/changePassword" class="btn btn-primary right">Change Password</a>
         <div class="clearfix"></div>
     </form>
 </div>
 
+<!-- Profile  -->
+
+<div class="modal fade bootstrap-modal" id="cropperModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                <h4 class="modal-title" id="myModalLabel">Image Cropper</h4>
+            </div>
+            <div class="modal-body cropperPreview">
+                <div>
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cropButton" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="getCroppedImage()">Crop</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cropper Model -->
+
 <script>
+    var cropBoxData;
+    var canvasData;
+    var cropper;
+
+    function dataURLtoBlob(dataurl) {
+        var arr = dataurl.split(',');
+        var mime = "image/jpeg";
+        var bstr = atob(arr[1]),
+            n = bstr.length,
+            u8arr = new Uint8Array(n);
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new Blob([u8arr.buffer], {
+            type: mime
+        });
+    }
+
+    /**
+     * Unique Id
+     * **/
+
+    function guid() {
+        function s4() {
+            return Math.floor((1 + Math.random()) * 0x10000)
+                .toString(16)
+                .substring(1);
+        }
+        return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+            s4() + '-' + s4() + s4() + s4();
+    }
+
+    /**
+     * Convert dataUrl (base64) to fileList
+     * @param dataUrl
+     * @param filename
+     * @returns {Array}
+     */
+
+    function blobToFile(dataUrl, filename) {
+        var files = [];
+        var blob = dataURLtoBlob(dataUrl);
+        blob.lastModifiedDate = new Date();
+        blob.name = filename;
+        files.push(blob);
+        return files;
+    }
+
+    function onClickImage(e) {
+        $("#image-file")[0].click();
+    }
+
+    function onChangeImage() {
+        var imageFiles = $("#image-file")[0].files;
+        if(imageFiles.length) {
+            var file = imageFiles[0],
+                url = URL.createObjectURL(file),
+                img = $('<img id="avatar" src="' + url + '"/>');
+            $('.cropperPreview > div').empty().html(img);
+            $("#cropperModal").modal();
+        }
+    }
+
+    function getCroppedImage() {
+        $("#cropButton").attr("disabled", "true");
+        let croppedImage = cropper.getCroppedCanvas().toDataURL('image/jpeg');
+        $(".profile-image > img").attr("src", croppedImage);
+        let file = blobToFile(croppedImage, "croppedImage");
+        file = new File(file, guid());
+        var formData = new FormData();
+        formData.append('upload', file);
+        let csrf = $("[name='_csrf']").val();
+        $.ajax({
+            url: "http://localhost:3000/account/avatar/upload?_csrf=" + csrf,
+            method: "post",
+            processData: false,
+            contentType: false,
+            data: formData,
+            success(data) {
+                $("#cropperModal").modal("hide");
+                $("[name='avatarUrl']").val(data)
+            },
+            error(xhr, statusCode, error) {
+                console.log(xhr);
+            }
+        });
+    }
+
+    $("#cropperModal").on("show.bs.modal", function (e) {
+        let image = document.getElementById("avatar");
+        image.onload = function() {
+            var width = $(window).width(),
+                minContainerWidth = 500;
+            if(width < 600) {
+                minContainerWidth = 200;
+            }
+            cropper = new Cropper(image, {
+                aspectRatio: 1,
+                movable: false,
+                zoomable: false,
+                rotatable: false,
+                scalable: false,
+                responsive:true,
+                center:true,
+                zoomOnTouch:true,
+                minContainerWidth: minContainerWidth,
+                minContainerHeight: minContainerWidth * (this.height / this.width),
+                ready: function () {
+                    // Strict mode: set crop box data first
+                    cropper.setCropBoxData(cropBoxData).setCanvasData(canvasData);
+                },
+            });
+        };
+
+    });
+
+    $("#cropperModal").on("hide.bs.modal", function (e) {
+        $("#image-file").val("");
+        cropBoxData = cropper.getCropBoxData();
+        canvasData = cropper.getCanvasData();
+        cropper.destroy();
+    })
 </script>
 {% endblock %}

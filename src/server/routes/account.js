@@ -8,6 +8,10 @@ import * as _ from "lodash";
 import CryptoJS from "crypto-js";
 import nodemailerMG from "../utils/nodemailer";
 import debug from "debug";
+import formidable from "formidable";
+import fs from "fs";
+import path from "path";
+import {User} from "../models/modelConfig";
 
 const account = express.Router();
 
@@ -38,6 +42,145 @@ passport.use(new LocalStrategy(async (username, password, done) => {
     }
 }));
 
+account.get("/logout", async (req, res, next) => {
+    try {
+        if(req.user) {
+            await removeToken(req.user._id);
+            res.clearCookie("authToken");
+            delete req.user;
+        }
+        res.redirect("/");
+    } catch(e) {
+        next(e);
+    }
+});
+
+
+account.route("/changePassword")
+    .get((req, res, next) => {
+        res.render("changePassword.html", {csrfToken: req.csrfToken(), user: req.user});
+    })
+    .post( async (req, res, next) => {
+        try {
+            let [oldPassword, newPassword, rePassword] = [req.body["old-password"], req.body['new-password'], req.body['re-password']];
+            let currentUser = await findOneUser({_id: req.user._id}),
+                verifyPassword = passwordHash.verify(oldPassword, currentUser.password);
+            if(verifyPassword) {
+                if(newPassword === rePassword) {
+                    await updateUser({_id: req.user._id}, {$set: {
+                        password: passwordHash.generate(newPassword)
+                    }});
+                    await removeToken(req.user._id);
+                    res.clearCookie("authToken");
+                    delete req.user;
+                    req.flash("success", "Password changed. Please Login");
+                    res.redirect("/account/login");
+                } else {
+                    req.flash("error", "New password is not matched");
+                }
+            } else {
+                req.flash("error", "Password incorrect");
+            }
+            res.redirect("/account/changePassword");
+        } catch (e) {
+            next(e);
+        }
+    });
+
+account.route("/forgot")
+    .get((req, res, next) => {
+        res.render("forgot.html", {csrfToken: req.csrfToken()});
+    })
+    .post(async (req, res, next) => {
+        try {
+            let user = await findOneUser({"emails.address": req.body.email});
+            if (user) {
+                let resetPasswordToken = CryptoJS.enc.Hex.stringify(CryptoJS.lib.WordArray.random(16)),
+                    resetPasswordExpires = Date.now() + 3600000; // 1 hour
+                await updateUser({_id: user._id}, {
+                    $set: {
+                        resetPasswordToken,
+                        resetPasswordExpires, // 1 hour
+                    }
+                });
+
+                // Send Reset Password Email
+                nodemailerMG.sendMail({
+                    from: 'demoapp@no-reply.com', // sender address
+                    to: user.emails.address, // list of receivers
+                    subject: 'Reset Password', // Subject line
+                    html: `Reset Password: <a href="http://localhost:3000/account/resetPassword?verifyToken=${resetPasswordToken}">http://localhost:3000/account/resetPassword?verifyToken=${resetPasswordToken}</a>` // html body
+                }, (error, info) => {
+                    if (error) console.log(error);
+                    else console.log(info);
+                });
+
+                req.flash("info", "An email has been sent to your email");
+                return res.redirect('/account/login')
+            }
+            req.flash("error", "Email not found");
+            res.redirect("/account/forgot");
+        } catch (e) {
+            next(e);
+        }
+    });
+
+account.post("/profile/update", async (req, res, next) => {
+    try {
+        let { name, avatarUrl } = req.body,
+            modifier = {
+                "profile.name": name
+            };
+        if(avatarUrl.length) {
+            Object.assign(modifier, {
+                "profile.image": avatarUrl
+            })
+        }
+
+        await User.update({_id: req.user._id}, {$set: modifier});
+        req.flash("success", "Update Successfully");
+        res.redirect("/");
+    } catch(e) {
+        req.flash("error", "Cannot update profile");
+        res.redirect("/profile");
+    }
+});
+
+account.post("/avatar/upload", async (req, res, next) => {
+    // create an incoming form object
+    let form = new formidable.IncomingForm();
+
+    form.fileUploaded = "";
+
+    // specify that we want to allow the user to upload multiple files in a single request
+    form.multiples = true;
+
+    // store all uploads in the /uploads directory
+    form.uploadDir = path.join(__dirname, '../../../', "public/avatar");
+
+    // every time a file has been uploaded successfully,
+    // rename it to it's orignal name
+    form.on('file', function(field, file) {
+        fs.rename(file.path, path.join(form.uploadDir, file.name+'.jpg'));
+        form.fileUploaded = path.join("/static/avatar", file.name+'.jpg');
+    });
+
+    // log any errors that occur
+    form.on('error', function(err) {
+        console.log('An error has occured: \n' + err);
+        res.end('error');
+    });
+
+    // once all the files have been uploaded, send a response to the client
+    form.on('end', function() {
+        res.end(form.fileUploaded);
+    });
+
+    // parse the incoming request containing the form data
+    form.parse(req);
+
+});
+
 account.use((req, res, next) => {
     if (req.user) {
         if (!req.user.emails.isVerified) {
@@ -48,6 +191,8 @@ account.use((req, res, next) => {
         if (!req.user.phoneNumber.isVerified) {
             return res.redirect("/verify/phoneNumber")
         }
+
+        return res.redirect("/");
     }
     next();
 });
@@ -117,45 +262,6 @@ account.route("/signup")
         }
     });
 
-account.route("/forgot")
-    .get((req, res, next) => {
-        res.render("forgot.html", {csrfToken: req.csrfToken()});
-    })
-    .post(async (req, res, next) => {
-        try {
-            let user = await findOneUser({"emails.address": req.body.email});
-            if (user) {
-                let resetPasswordToken = CryptoJS.enc.Hex.stringify(CryptoJS.lib.WordArray.random(16)),
-                    resetPasswordExpires = Date.now() + 3600000; // 1 hour
-                await updateUser({_id: user._id}, {
-                    $set: {
-                        resetPasswordToken,
-                        resetPasswordExpires, // 1 hour
-                    }
-                });
-
-                // Send Reset Password Email
-                nodemailerMG.sendMail({
-                    from: 'demoapp@no-reply.com', // sender address
-                    to: user.emails.address, // list of receivers
-                    subject: 'Reset Password', // Subject line
-                    html: `Reset Password: <a href="http://localhost:3000/account/resetPassword?verifyToken=${resetPasswordToken}">http://localhost:3000/account/resetPassword?verifyToken=${resetPasswordToken}</a>` // html body
-                }, (error, info) => {
-                    if (error) console.log(error);
-                    else console.log(info);
-                });
-
-                req.flash("info", "An email has been sent to your email");
-                return res.redirect('/account/login')
-            }
-            req.flash("error", "Email not found");
-            res.redirect("/account/forgot");
-        } catch (e) {
-            next(e);
-        }
-    });
-
-
 account.use('/resetPassword', async (req, res, next) => {
     try {
         if (req.query.verifyToken) {
@@ -214,51 +320,4 @@ account.route('/resetPassword')
         }
     });
 
-account.route("/changePassword")
-    .get((req, res, next) => {
-        res.render("changePassword.html", {csrfToken: req.csrfToken(), user: req.user});
-    })
-    .post( async (req, res, next) => {
-        try {
-            let [oldPassword, newPassword, rePassword] = [req.body["old-password"], req.body['new-password'], req.body['re-password']];
-            let currentUser = await findOneUser({_id: req.user._id}),
-                verifyPassword = passwordHash.verify(oldPassword, currentUser.password);
-            if(verifyPassword) {
-                if(newPassword === rePassword) {
-                    await updateUser({_id: req.user._id}, {$set: {
-                        password: passwordHash.generate(newPassword)
-                    }});
-                    await removeToken(req.user._id);
-                    res.clearCookie("authToken");
-                    delete req.user;
-                    req.flash("success", "Password changed. Please Login");
-                    res.redirect("/account/login");
-                } else {
-                    req.flash("error", "New password is not matched");
-                }
-            } else {
-                req.flash("error", "Password incorrect");
-            }
-            res.redirect("/account/changePassword");
-        } catch (e) {
-            next(e);
-        }
-    });
-account.route("/update/profile")
-    .post( async (req, res, next) => {
-        try {
-            let newName = req.body["name"];
-            let currentUser = await findOneUser({_id: req.user._id});
-            if(newName) {
-                await updateUser({_id: req.user._id}, {$set: {"profile.name": newName}});
-                req.flash("success", "Name was updated successfully");
-                res.redirect("/profile");
-            } else {
-                req.flash("error", "Name can't be blank");
-            }
-            
-        } catch (e) {
-            next(e``);
-        }
-    });
 export default account;

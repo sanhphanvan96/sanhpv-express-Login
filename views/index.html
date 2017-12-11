@@ -13,6 +13,7 @@
     <script src="https://use.fontawesome.com/dbaea2a415.js"></script>
 </head>
 <body>
+{% if hasHeader %}
 <div role="navigation" class="navbar navbar-inverse navbar-static-top">
     <div class="container">
         <div class="navbar-header">
@@ -25,24 +26,38 @@
             <ul class="nav navbar-nav">
                 <li><a href="/">Home</a></li>
                 {% if user %}
-                <li><a href="">{{user.emails.address}}</a></li>
                 {% if not user.emails.isVerified %}
                 <li><a href="/verify/email"> Verify Email </a></li>
                 {% endif %}
                 {% if not user.phoneNumber.isVerified %}
                 <li><a href="/verify/phoneNumber"> Verify Phone Number </a></li>
                 {% endif %}
-                {% if user.emails.isVerified and user.phoneNumber.isVerified %}
-                <li><a href="/profile"> Profile </a></li>
-                {% endif %}
                 {% else %}
                 <li><a href="/account/login">Login</a></li>
                 <li><a href="/account/signup">Signup</a></li>
                 {% endif %}
             </ul>
+            {% if user %}
+            <ul class="nav navbar-nav navbar-right">
+                <li class="dropdown ">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+                        {{user.emails.address}}
+                        <span class="caret"></span></a>
+                    <ul class="dropdown-menu" role="menu">
+                        {% if user.emails.isVerified and user.phoneNumber.isVerified %}
+                        <li><a href="/profile"> Profile </a></li>
+                        {% endif %}
+                        <li class="divider"></li>
+                        <li><a href="/account/logout">Logout</a></li>
+                    </ul>
+                </li>
+            </ul>
+            {% endif %}
         </div>
     </div>
 </div>
+{% endif %}
+{% if not adminPage%}
 <div class="container">
     {% if messages.error %}
     <div class="alert alert-danger">{{messages.error}}</div>
@@ -56,5 +71,9 @@
     {% block content %}
     {% endblock %}
 </div>
+{% else %}
+    {% block admin %}
+    {% endblock %}
+{% endif %}
 </body>
 </html>

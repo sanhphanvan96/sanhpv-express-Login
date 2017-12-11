@@ -1,4 +1,5 @@
 import React, {Component} from "react";
+import AllUser from "../users/allUser";
 
 class Home extends Component {
     constructor(props) {
@@ -17,7 +18,9 @@ class Home extends Component {
 
     render() {
         return (
-            <div>Hello</div>
+            <section>
+                <h1>Dashboard</h1>
+            </section>
         )
     }
 }

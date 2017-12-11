@@ -15,7 +15,10 @@ import nunjucks from "nunjucks";
 import passport from 'passport';
 import flash from "express-flash";
 import router from "./routes/routers";
-import {countRoles, createRole} from "./controllers/roles";
+import {countRoles, createRole, getRolesByName} from "./controllers/roles";
+import faker from "faker";
+import {User} from "./models/modelConfig";
+import passwordHash from "password-hash";
 
 const app = express();
 
@@ -87,6 +90,24 @@ const boot = async (app) => {
         await createRole("admin");
         await createRole("user");
     }
+  /*  let userRole = await getRolesByName("user");
+    for (let i = 0; i < 100; i++) {
+        await new User({
+            emails: {
+                address: faker.internet.email(),
+                isVerified: true
+            },
+            phoneNumber: {
+                number: faker.phone.phoneNumberFormat(),
+                isVerified: true
+            },
+            password: passwordHash.generate("123456"),
+            profile: {
+                name: `${faker.name.firstName()} ${faker.name.lastName()}`
+            },
+            roles: [userRole._id.toString()]
+        }).save()
+    }*/ // Create Initial Users
 };
 
 boot(app);
