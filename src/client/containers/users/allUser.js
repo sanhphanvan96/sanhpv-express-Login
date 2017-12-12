@@ -18,12 +18,12 @@ class AllUser extends React.Component {
         }];
         this.limit = 10;
         this.skip = 0;
+        this.filter = "";
         this.state = {
             users: [],
             loading: true,
             csrfToken: "",
-            userCount: 0,
-            changed: true
+            userCount: 0
         }
     }
 
@@ -35,8 +35,8 @@ class AllUser extends React.Component {
         return users || loading || userCount || change;
     }
 
-    async loadData(filter) {
-        let page = this.props.match.params.page || 1;
+    async loadData(filter, pageNumber) {
+        let page = pageNumber || 1;
         let isActiveNumber = page > 0 ? (+page) - 1 : 0;
         this.skip = isActiveNumber * this.limit;
         await fetchUser(filter, this.limit, this.skip);
@@ -44,7 +44,8 @@ class AllUser extends React.Component {
     }
 
     async componentDidMount() {
-        await this.loadData();
+        let currentPage = this.props.match.params.page || 1;
+        await this.loadData(null, currentPage);
         setTimeout(() => {
             this.setState({csrfToken: $("#_csrf").val()});
         }, 0)
@@ -56,7 +57,7 @@ class AllUser extends React.Component {
             this.setState({userCount: nextProps.userCount})
         }
         if(!_.isEqual(this.props.match, nextProps.match)) {
-
+            this.loadData(this.filter, nextProps.match.params.page);
         }
     }
 
@@ -110,7 +111,8 @@ class AllUser extends React.Component {
     }
 
     async onChangeSearch(searchText) {
-        await this.loadData(searchText, this.limit, this.skip);
+        this.filter = searchText;
+        await this.loadData(searchText, 1);
     }
 
     renderHeader() {

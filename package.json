@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "webpack:watch": "webpack --debug --watch --devtool=eval",
     "webpack": "webpack -p",
-    "start": "babel-node src/server/index.js --presets react,latest,env,stage-3"
+    "start": "DEBUG=DemoApp babel-node src/server/index.js --presets react,latest,env,stage-3"
   },
   "author": "lamnh-sanhpv",
   "license": "ISC",
