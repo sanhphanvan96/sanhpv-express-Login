@@ -41,10 +41,10 @@ class Pagination extends React.Component {
 
         return (
             <ul className="pagination pull-right">
-                <li className={this.canGoBack() ? "" : "disabled"}><Link to={`/admin/users/${page - 1}`}><span
+                <li className={this.canGoBack() ? "" : "disabled"}><Link to={`/admin/users/${page > 1 ? page - 1 : 1}`}><span
                     className="glyphicon glyphicon-chevron-left"></span></Link></li>
                 {this.renderPagination()}
-                <li className={this.canGoForward() ? "" : "disabled"}><Link to={`/admin/users/${page + 1}`}><span
+                <li className={this.canGoForward() ? "" : "disabled"}><Link to={`/admin/users/${page < this.numberOfPages ? page + 1 : this.numberOfPages}`}><span
                     className="glyphicon glyphicon-chevron-right"></span></Link></li>
             </ul>
         )

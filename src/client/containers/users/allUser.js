@@ -112,6 +112,9 @@ class AllUser extends React.Component {
 
     async onChangeSearch(searchText) {
         this.filter = searchText;
+        if(this.props.match.params.page !== 1) {
+            this.props.history.push("/admin/users/1");
+        }
         await this.loadData(searchText, 1);
     }
 
